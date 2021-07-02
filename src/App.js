@@ -2,13 +2,39 @@ import React from "react";
 import Cart from "./Cart";
 import Navbar from "./Navbar";
 import firebase from "firebase/app";
-
+import AddProduct from "./addProduct";
+import {
+  BrowserRouter as Router,
+  Link,
+  Redirect,
+  Route,
+  Switch,
+} from "react-router-dom";
+function Home(props) {
+  return (
+    <div>
+      <div>
+        <Cart
+          products={props.products}
+          increaseQuantity={props.increaseQuantity}
+          decreaseQuantity={props.decreaseQuantity}
+          handleDeleteOptions={props.handleDeleteOptions}
+        />
+        {props.loading && <h1>Loading....</h1>}
+      </div>
+      <div style={{ fontSize: 20, padding: 10 }}>
+        Total Amount : {props.totalAmount()}
+      </div>
+    </div>
+  );
+}
 class App extends React.Component {
   constructor() {
     super();
     this.state = {
       products: [],
       loading: true,
+      product: {},
     };
     this.db = firebase.firestore().collection("products");
   }
@@ -55,21 +81,36 @@ class App extends React.Component {
       this.setState({ products, loading: false });
     });
   };
-  AddItem = () => {
-    this.db
-      .add({
-        img: "https://media.croma.com/image/upload/v1605332123/Croma%20Assets/Large%20Appliances/Washers%20and%20Dryers/Images/8986234421278.png",
-        price: 9999,
-        qty: 1,
-        title: "Washing Machine",
-      })
-      .then((docRef) => {
-        console.log("Product has been added", docRef);
-      })
-      .catch((err) => {
-        console.log("Oops Something went wrong", err);
-      });
+  handleChange = (key, value) => {
+    const product = {
+      ...this.state.product,
+    };
+    product[key] = value;
+    this.setState({
+      product,
+    });
   };
+  handleSubmit = (e) => {
+    e.preventDefault();
+    const { product } = this.state;
+    if (Object.keys(product).length != 0) {
+      this.db
+        .add({
+          img: product.imageUrl,
+          title: product.name,
+          price: product.price,
+          qty: 1,
+        })
+        .then((docref) => {
+          console.log("Product has been added", docref);
+        })
+        .catch((err) => {
+          console.log("Oops something went wrong", err);
+        });
+    }
+    this.setState({ product: {} });
+  };
+
   totalItems = () => {
     const { products } = this.state;
     let count = 0;
@@ -87,25 +128,44 @@ class App extends React.Component {
     return amount;
   };
   render() {
+    const { product } = this.state;
+
     return (
-      <div className="App">
+      <Router>
         <div>
           <Navbar count={this.totalItems()} />
         </div>
-        <div>
-          <Cart
-            products={this.state.products}
-            increaseQuantity={this.increaseQuantity}
-            decreaseQuantity={this.decreaseQuantity}
-            handleDeleteOptions={this.handleDeleteOptions}
+        <Switch>
+          <Route
+            exact
+            path="/"
+            render={(props) => {
+              return (
+                <Home
+                  products={this.state.products}
+                  increaseQuantity={this.increaseQuantity}
+                  decreaseQuantity={this.decreaseQuantity}
+                  handleDeleteOptions={this.handleDeleteOptions}
+                  loading={this.state.loading}
+                  totalAmount={this.totalAmount}
+                />
+              );
+            }}
           />
-          {this.state.loading && <h1>Loading....</h1>}
-        </div>
-        <div style={{ fontSize: 20, padding: 10 }}>
-          Total Amount : {this.totalAmount()}
-        </div>
-        <button onClick={this.AddItem}>Add Product</button>
-      </div>
+          <Route
+            path="/add/product"
+            render={(props) => {
+              return (
+                <AddProduct
+                  handleChange={this.handleChange}
+                  handleSubmit={this.handleSubmit}
+                  checkAddProductStatus={this.checkAddProductStatus}
+                />
+              );
+            }}
+          />
+        </Switch>
+      </Router>
     );
   }
 }
