@@ -4,6 +4,13 @@ const Navbar = (props) => {
   return (
     <div style={styles.nav}>
       <div>
+        <Link to="/" style={{ textDecoration: "none" }}>
+          <h4 style={{ marginLeft: 10, cursor: "pointer", color: "black" }}>
+            Kart
+          </h4>
+        </Link>
+      </div>
+      <div style={{ marginLeft: "auto" }}>
         <Link to="/add/product" style={{ textDecoration: "none" }}>
           <h5 style={{ marginRight: 15, cursor: "pointer", color: "black" }}>
             Add Product
